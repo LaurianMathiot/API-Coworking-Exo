@@ -1,8 +1,10 @@
-const mockCoworkings = require('./mock-coworkings')
 const express = require('express')
 const morgan = require('morgan')
+const sequelize = require('./db/sequelize')
 const app = express()
 const port = 3000
+
+sequelize.initDb()
 
 app.use(morgan('dev'))
 app.use(express.json())
