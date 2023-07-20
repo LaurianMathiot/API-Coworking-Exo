@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const mockCoworkings = require("../db/mock-coworkings");
 const coworkingController = require("../controllers/coworkingController");
 
 router

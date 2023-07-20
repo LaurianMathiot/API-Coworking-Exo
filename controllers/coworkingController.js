@@ -1,3 +1,4 @@
+const { ValidationError } = require("sequelize");
 const mockCoworkings = require("../db/mock-coworkings");
 const { coworkingModel } = require("../db/sequelize");
 
@@ -26,7 +27,7 @@ exports.findCoworkingsByPk = (req, res) => {
     .findByPk(req.params.id)
     .then((result) => {
       if (!result) {
-        res.json({
+        res.status(404).json({
           message: `Le coworking avec l'id ${req.params.id} n'existe pas`,
         });
       } else {
@@ -56,13 +57,16 @@ exports.createCoworkings = (req, res) => {
       address: newCoworking.address,
     })
     .then((coworking) => {
-      return res.json({
+      return res.status(201).json({
         message: `L'élément ${newCoworking.name} a bien été créé.`,
         data: coworking,
       });
     })
     .catch((error) => {
-      return res.json({
+      if (error instanceof ValidationError) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({
         message: `L'élément n'a pas pu être créé. ${error}`,
       });
     });
@@ -77,7 +81,7 @@ exports.updateCoworkings = (req, res) => {
     })
     .then((result) => {
       if (!result) {
-        res.json({
+        res.status(404).json({
           message: `Le coworking avec l'id ${req.params.id} n'existe pas`,
         });
       } else {
@@ -112,6 +116,6 @@ exports.deleteCoworkings = (req, res) => {
       }
     })
     .catch((error) => {
-      res.json({ message: error });
+      res.status(500).json({ message: error });
     });
 };

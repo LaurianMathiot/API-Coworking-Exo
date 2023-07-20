@@ -24,18 +24,22 @@ const initDb = () => {
   // Création d'un élément
   sequelize.sync({ force: true }).then(() => {
     mockCoworkings.forEach((mock) => {
-      coworkingModel.create({
-        name: mock.name,
-        price: mock.price,
-        superficy: mock.superficy,
-        capacity: mock.capacity,
-        address: mock.address,
-      });
+      // coworkingModel.create({
+      //   name: mock.name,
+      //   price: mock.price,
+      //   superficy: mock.superficy,
+      //   capacity: mock.capacity,
+      //   address: mock.address,
+      // });
     });
   });
 };
 
+const getUserModel = require("../models/userModel");
+const userModel = getUserModel(sequelize, DataTypes);
+
 module.exports = {
   initDb,
   coworkingModel,
+  userModel,
 };
