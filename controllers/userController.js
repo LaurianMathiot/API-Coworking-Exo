@@ -1,5 +1,6 @@
 const { userModel } = require("../db/sequelize");
-const { ValidationError } = require("sequelize");
+const { ValidationError, UniqueConstraintError } = require("sequelize");
+const bcrypt = require("bcrypt");
 
 // FIND ALL ------------------------------------------------------------------
 
@@ -22,20 +23,22 @@ exports.findAllUsers = (req, res) => {
 // CREATE USER ------------------------------------------------------------------
 
 exports.createUsers = (req, res) => {
-  const newUser = req.body;
-  userModel
-    .create({
-      username: newUser.username,
-      password: newUser.password,
-    })
-    .then((user) => {
-      return res.status(201).json({
-        message: `L'élément ${newUser.username} a bien été créé.`,
-        data: user,
+  bcrypt
+    .hash(req.body.password, 10)
+    .then((hash) => {
+      const newUser = { ...req.body, password: hash };
+      return userModel.create(newUser).then((user) => {
+        return res.status(201).json({
+          message: `L'utilisateur ${newUser.username} a bien été créé.`,
+          data: user,
+        });
       });
     })
     .catch((error) => {
-      if (error instanceof ValidationError) {
+      if (
+        error instanceof ValidationError ||
+        error instanceof UniqueConstraintError
+      ) {
         return res.status(400).json({ message: error.message });
       }
       res.status(500).json({
@@ -70,18 +73,21 @@ exports.deleteUsers = (req, res) => {
 
 exports.updateUsers = (req, res) => {
   userModel
-    .update(req.body, {
-      where: { id: req.params.id },
-    })
+    .findByPk(req.params.id)
     .then((result) => {
       if (!result) {
         res.status(404).json({
           message: `L'utilisateur' avec l'id ${req.params.id} n'existe pas`,
         });
       } else {
-        res.json({
-          message: `L'utilisateur' avec l'id ${req.params.id} a bien été modifié`,
-          data: result,
+        return bcrypt.hash(req.body.password, 10).then((hash) => {
+          const dataUser = { ...req.body, password: hash };
+          return result.update(dataUser).then(() => {
+            res.json({
+              message: `Utilisateur modifié : ${result.dataValues.id}`,
+              data: result,
+            });
+          });
         });
       }
     })

@@ -1,5 +1,8 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const mockCoworkings = require("./mock-coworkings");
+const getRoles = require("../db/roles.json");
+const getUsers = require("../db/users.json");
+const bcrypt = require("bcrypt");
 
 const sequelize = new Sequelize("coworking_exo", "root", "", {
   host: "localhost",
@@ -20,6 +23,12 @@ sequelize
 const getCoworkingModel = require("../models/coworkingModel");
 const coworkingModel = getCoworkingModel(sequelize, DataTypes);
 
+const getUserModel = require("../models/userModel");
+const userModel = getUserModel(sequelize, DataTypes);
+
+const getRoleModel = require("../models/roleModel");
+const roleModel = getRoleModel(sequelize, DataTypes);
+
 const initDb = () => {
   // Création d'un élément
   sequelize.sync({ force: true }).then(() => {
@@ -32,14 +41,25 @@ const initDb = () => {
       //   address: mock.address,
       // });
     });
+    getRoles.forEach((element) => {
+      roleModel.create({
+        label: element.label,
+      });
+    });
+    getUsers.forEach((element) => {
+      bcrypt.hash(element.password, 10).then((hash) => {
+        userModel.create({
+          username: element.username,
+          password: hash,
+        });
+      });
+    });
   });
 };
-
-const getUserModel = require("../models/userModel");
-const userModel = getUserModel(sequelize, DataTypes);
 
 module.exports = {
   initDb,
   coworkingModel,
   userModel,
+  roleModel,
 };
