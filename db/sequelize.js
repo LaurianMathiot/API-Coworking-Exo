@@ -1,6 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const mockCoworkings = require("./mock-coworkings");
-const getRoles = require("../db/roles.json");
+const roles = require("../db/roles.json");
+const getReviews = require("../db/review.json");
 const getUsers = require("../db/users.json");
 const bcrypt = require("bcrypt");
 
@@ -29,28 +30,54 @@ const userModel = getUserModel(sequelize, DataTypes);
 const getRoleModel = require("../models/roleModel");
 const roleModel = getRoleModel(sequelize, DataTypes);
 
+const getReviewModel = require("../models/reviewModel");
+const reviewModel = getReviewModel(sequelize, DataTypes);
+
+roleModel.hasMany(userModel);
+userModel.belongsTo(roleModel);
+
 const initDb = () => {
   // Création d'un élément
   sequelize.sync({ force: true }).then(() => {
     mockCoworkings.forEach((mock) => {
-      // coworkingModel.create({
-      //   name: mock.name,
-      //   price: mock.price,
-      //   superficy: mock.superficy,
-      //   capacity: mock.capacity,
-      //   address: mock.address,
-      // });
-    });
-    getRoles.forEach((element) => {
-      roleModel.create({
-        label: element.label,
+      coworkingModel.create({
+        name: mock.name,
+        price: mock.price,
+        superficy: mock.superficy,
+        capacity: mock.capacity,
+        address: mock.address,
       });
     });
-    getUsers.forEach((element) => {
-      bcrypt.hash(element.password, 10).then((hash) => {
-        userModel.create({
-          username: element.username,
-          password: hash,
+
+    getReviews.forEach((review) => {
+      reviewModel.create({
+        content: review.content,
+        rating: review.rating,
+      });
+    });
+
+    const rolePromises = roles.map((role) => {
+      return roleModel.create({
+        label: role.label,
+      });
+    });
+    Promise.all(rolePromises).then(() => {
+      roleModel.findOne({ where: { label: "editor" } }).then((role) => {
+        bcrypt.hash("mdp", 10).then((hash) => {
+          userModel.create({
+            username: "Simon",
+            password: hash,
+            roleId: role.id,
+          });
+        });
+      });
+      roleModel.findOne({ where: { label: "admin" } }).then((role) => {
+        bcrypt.hash("mdp", 10).then((hash) => {
+          userModel.create({
+            username: "Pierre",
+            password: hash,
+            roleId: role.id,
+          });
         });
       });
     });
@@ -62,4 +89,5 @@ module.exports = {
   coworkingModel,
   userModel,
   roleModel,
+  reviewModel,
 };

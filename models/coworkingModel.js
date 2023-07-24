@@ -5,27 +5,30 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    name: { type: DataTypes.STRING },
+    name: {
+      type: DataTypes.STRING,
+      unique: {
+        msg: "Le nom est déjà pris",
+      },
+    },
     price: {
       type: DataTypes.JSON,
       validate: {
         customValidator(value) {
-          let letPass = false;
           if (
             value.hasOwnProperty("hour") &&
             value.hasOwnProperty("day") &&
             value.hasOwnProperty("month")
           ) {
-            for (const key in value) {
-              if (value[key] !== null) {
-                letPass = true;
-              }
-              if (!letPass) {
-                throw new Error("Au moins un des prix doit être renseigné");
-              }
+            if (
+              value.hour === null &&
+              value.day === null &&
+              value.month === null
+            ) {
+              throw new Error("Price cannot have all values set to null");
             }
           } else {
-            throw new Error("Vérifier la syntaxe de la donnée");
+            throw new Error("Incorect syntax in Price JSON");
           }
         },
       },
@@ -42,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       validate: {
         isNumeric: {
-          msg: `La capacitié doit être un nombre`,
+          msg: `La capacité doit être un nombre`,
         },
       },
     },
